@@ -13,21 +13,28 @@ defmodule Advent.Day01 do
   def part_1(input) do
     input
     |> parse()
-    |> Enum.scan(@starting_position, fn {direction, distance}, position ->
-      move(position, direction, distance)
-    end)
-    |> Enum.count(&(&1 == 0))
+    |> count_zeroes()
   end
 
   @doc """
   Part 2
+
+  Simply converts each instruction into multiple instructions of distance 1
   """
   @spec part_2(String.t()) :: integer
   def part_2(input) do
     input
     |> parse()
+    |> Enum.flat_map(fn {direction, distance} -> List.duplicate({direction, 1}, distance) end)
+    |> count_zeroes()
+  end
 
-    0
+  defp count_zeroes(instructions) do
+    instructions
+    |> Enum.scan(@starting_position, fn {direction, distance}, position ->
+      move(position, direction, distance)
+    end)
+    |> Enum.count(&(&1 == 0))
   end
 
   defp move(position, :left, distance), do: (position - distance + @num_poistions) |> rem(@num_poistions)
