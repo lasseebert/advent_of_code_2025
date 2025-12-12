@@ -26,6 +26,7 @@ defmodule Advent.Day03 do
   end
 
   defp joltage_n(batteries, n) do
+    # Start with the first m batteries
     {selected, rest} = Enum.split(batteries, n)
     joltage(selected, rest)
   end
@@ -36,21 +37,35 @@ defmodule Advent.Day03 do
     |> Enum.reduce(0, fn num, acc -> acc * 10 + num end)
   end
 
+  # Find the left-most pair where the left is less than the right, then remove the left.
+  # If no such pair exists, throw away the last added candidate and continue.
   defp joltage(selected, [next | rest]) do
     candidates = selected ++ [next]
-    # Find the first pair where the second is larger than the first
-    candidates
-    |> Enum.chunk_every(2, 1, :discard)
-    |> Enum.find_index(fn [a, b] -> b > a end)
-    |> case do
-      nil ->
-        # No such pair, keep what we have
-        joltage(selected, rest)
 
-      index ->
-        {first_part, [_throwaway | second_part]} = Enum.split(candidates, index)
-        joltage(first_part ++ second_part, rest)
+    case remove_lower_lead([hd(candidates)], tl(candidates)) do
+      {:removed, candidates} ->
+        joltage(candidates, rest)
+
+      :none_found ->
+        # Remove the newly added candidate
+        joltage(selected, rest)
     end
+  end
+
+  # Use a zipper structure to traverse the list
+  # Termination case: Found a lower lead
+  defp remove_lower_lead([a | rest_left], [b | rest_right]) when a < b do
+    {:removed, Enum.reverse(rest_left) ++ [b | rest_right]}
+  end
+
+  # Continue searching
+  defp remove_lower_lead(left, [b | rest_right]) do
+    remove_lower_lead([b | left], rest_right)
+  end
+
+  # Termination case: No lower lead found
+  defp remove_lower_lead(_left, []) do
+    :none_found
   end
 
   defp parse(input) do
