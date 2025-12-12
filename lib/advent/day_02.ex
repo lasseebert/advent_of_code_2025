@@ -42,14 +42,15 @@ defmodule Advent.Day02 do
   end
 
   defp invalid_id_part_2?(id) when id < 10, do: false
+
   defp invalid_id_part_2?(id) do
     digits = Integer.digits(id)
     len = length(digits)
 
     Enum.any?(1..div(len, 2), fn sequence_length ->
       Enum.chunk_every(digits, sequence_length)
-        |> Enum.uniq()
-        |> length() == 1
+      |> Enum.uniq()
+      |> length() == 1
     end)
   end
 
