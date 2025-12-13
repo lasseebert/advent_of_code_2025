@@ -8,10 +8,9 @@ defmodule Advent.Day04 do
   """
   @spec part_1(String.t()) :: integer
   def part_1(input) do
-    coords = parse(input)
-
-    coords
-    |> Enum.filter(&accessible?(&1, coords))
+    input
+    |> parse()
+    |> accessible()
     |> length()
   end
 
@@ -26,15 +25,18 @@ defmodule Advent.Day04 do
   end
 
   defp remove_until_stable(coords, count) do
-    accessible = Enum.filter(coords, &accessible?(&1, coords))
+    case accessible(coords) do
+      [] ->
+        count
 
-    if length(accessible) == 0 do
-      count
-    else
-      coords = Enum.reduce(accessible, coords, fn coord, acc -> MapSet.delete(acc, coord) end)
-      remove_until_stable(coords, count + length(accessible))
+      accessible ->
+        accessible
+        |> Enum.reduce(coords, fn coord, acc -> MapSet.delete(acc, coord) end)
+        |> remove_until_stable(count + length(accessible))
     end
   end
+
+  defp accessible(coords), do: Enum.filter(coords, &accessible?(&1, coords))
 
   defp accessible?(coord, coords) do
     coord
