@@ -15,6 +15,27 @@ defmodule Advent.Day04 do
     |> length()
   end
 
+  @doc """
+  Part 2
+  """
+  @spec part_2(String.t()) :: integer
+  def part_2(input) do
+    input
+    |> parse()
+    |> remove_until_stable(0)
+  end
+
+  defp remove_until_stable(coords, count) do
+    accessible = Enum.filter(coords, &accessible?(&1, coords))
+
+    if length(accessible) == 0 do
+      count
+    else
+      coords = Enum.reduce(accessible, coords, fn coord, acc -> MapSet.delete(acc, coord) end)
+      remove_until_stable(coords, count + length(accessible))
+    end
+  end
+
   defp accessible?(coord, coords) do
     coord
     |> neighbours()
@@ -33,17 +54,6 @@ defmodule Advent.Day04 do
       {x, y + 1},
       {x + 1, y + 1}
     ]
-  end
-
-  @doc """
-  Part 2
-  """
-  @spec part_2(String.t()) :: integer
-  def part_2(input) do
-    input
-    |> parse()
-
-    0
   end
 
   defp parse(input) do
