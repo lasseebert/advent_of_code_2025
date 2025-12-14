@@ -20,10 +20,36 @@ defmodule Advent.Day05 do
   """
   @spec part_2(String.t()) :: integer
   def part_2(input) do
-    input
-    |> parse()
+    {ranges, _ids} = parse(input)
 
-    0
+    ranges
+    |> merge_ranges()
+    |> Enum.map(&Range.size/1)
+    |> Enum.sum()
+  end
+
+  # Merge overlapping ranges. This can be done in O(n) after we have sorted it
+  # (which is O(n log n))
+  defp merge_ranges(ranges) do
+    ranges
+    |> Enum.sort_by(& &1.first)
+    |> merges_ranges([])
+  end
+
+  # Termination case, all is merged, just return the accumulated list
+  defp merges_ranges([], acc), do: acc
+
+  # First item, just add it to the accumulator
+  defp merges_ranges([current | rest], []), do: merges_ranges(rest, [current])
+
+  # Any item only needs to be compared to the last merged range
+  defp merges_ranges([current | rest], [last_merged | acc_rest]) do
+    if current.first <= last_merged.last + 1 do
+      new_merged = last_merged.first..Enum.max([last_merged.last, current.last])
+      merges_ranges(rest, [new_merged | acc_rest])
+    else
+      merges_ranges(rest, [current, last_merged | acc_rest])
+    end
   end
 
   defp parse(input) do
