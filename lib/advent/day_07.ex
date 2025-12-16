@@ -50,10 +50,46 @@ defmodule Advent.Day07 do
   """
   @spec part_2(String.t()) :: integer
   def part_2(input) do
-    input
-    |> parse()
+    {splitters, start} = parse(input)
 
-    0
+    max_y = splitters |> Enum.map(fn {_x, y} -> y end) |> Enum.max()
+
+    cache = %{}
+    {_cache, count} = count_timelines(start, cache, splitters, max_y)
+    count
+  end
+
+  # Below max y, there is only one timeline
+  defp count_timelines({_x, y}, cache, _splitters, max_y) when y > max_y do
+    {cache, 1}
+  end
+
+  # Do a depth-first search with memoization
+  # If a sub-tree has n number of timelines, it will have the same number of timelines
+  # for any parent node above it.
+  defp count_timelines(pos = {x, y}, cache, splitters, max_y) do
+    next_pos = {x, y + 1}
+
+    cond do
+      Map.has_key?(cache, pos) ->
+        {cache, Map.get(cache, pos)}
+
+      MapSet.member?(splitters, next_pos) ->
+        left = {x - 1, y + 1}
+        right = {x + 1, y + 1}
+
+        {cache, left_count} = count_timelines(left, cache, splitters, max_y)
+        {cache, right_count} = count_timelines(right, cache, splitters, max_y)
+
+        count = left_count + right_count
+        cache = Map.put(cache, pos, count)
+        {cache, count}
+
+      true ->
+        {cache, count} = count_timelines(next_pos, cache, splitters, max_y)
+        cache = Map.put(cache, pos, count)
+        {cache, count}
+    end
   end
 
   defp parse(input) do
