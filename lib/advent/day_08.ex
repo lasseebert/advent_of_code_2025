@@ -61,13 +61,55 @@ defmodule Advent.Day08 do
 
   @doc """
   Part 2
+
+  Naive solution. Runs in around 0.5 seconds on my machine for the puzzle input.
   """
   @spec part_2(String.t()) :: integer
   def part_2(input) do
-    input
-    |> parse()
+    points = parse(input)
 
-    0
+    # Generate all unique pairs of points, sorted by distance
+    sorted_pairs =
+      for a <- points,
+          b <- points,
+          a < b do
+        {sortable_distance(a, b), {a, b}}
+      end
+      |> Enum.sort()
+      |> Enum.map(fn {_dist, pair} -> pair end)
+
+    points
+    # Create groups with each point in its own group
+    |> Enum.into(%{}, fn point -> {point, MapSet.new([point])} end)
+    # Iterate until all points are in a single group
+    |> keep_connecting(sorted_pairs, length(points))
+    # Multuply the x coordinates of the last connected pair
+    |> then(fn {{x1, _y1, _z1}, {x2, _y2, _z2}} -> x1 * x2 end)
+  end
+
+  defp keep_connecting(groups, [{a, b} | rest], target_size) do
+    group_a = Map.get(groups, a)
+    group_b = Map.get(groups, b)
+
+    if MapSet.member?(group_a, b) do
+      keep_connecting(groups, rest, target_size)
+    else
+      merged_group = MapSet.union(group_a, group_b)
+
+      if MapSet.size(merged_group) == target_size do
+        # Done - return the last connected pair
+        {a, b}
+      else
+        # Update all points in the merged group to point to the new merged group
+        updated_groups =
+          merged_group
+          |> Enum.reduce(groups, fn point, acc ->
+            Map.put(acc, point, merged_group)
+          end)
+
+        keep_connecting(updated_groups, rest, target_size)
+      end
+    end
   end
 
   # We skip taking the square root since we only care about relative distances
